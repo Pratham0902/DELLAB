@@ -218,6 +218,9 @@ print("Parameters from SGD:", theta_sgd, bias_sgd)
 # Plot the loss history
 plot_loss_history(loss_history_gd, loss_history_sgd)
 
+print("AI Agent Pipeline test run successful")
+
+
 
 # In[ ]:
 

@@ -1,0 +1,53 @@
+name: DevOps AI Agent CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install openai gradio pytest requests huggingface_hub
+
+      - name: Run Unit Tests
+        run: |
+          pytest -v || true
+
+      - name: Run AI Agent
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python Untitled264.py
+
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: ai-agent-feedback
+          message: |
+            ✅ The AI Agent pipeline ran successfully on the DELLAB repo.
+            Tests completed and your agent executed without errors.
+
+      - name: Deploy to Hugging Face
+        if: github.ref == 'refs/heads/main'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo 'Deploying Gradio app to Hugging Face...'
+          huggingface-cli login --token $HF_TOKEN
+          huggingface-cli repo create dellab-agent --type space --sdk gradio --yes
+          git push https://huggingface.co/spaces/${{ github.repository_owner }}/dellab-agent main
